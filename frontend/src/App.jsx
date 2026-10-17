@@ -20,7 +20,6 @@ import Profile from "./pages/profile";
 import PostFeed from "./components/postFeed";
 import UserMenu from "./components/UserMenu";
 import { logoutUser } from "./services/authService";
-
 import "./index.css";
 
 const NOTIFICATIONS_URL = "/api/notifications";
