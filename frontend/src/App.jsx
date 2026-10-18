@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import quoraLogo from "./assets/quoraLogo.png";
+
+
 import {
   FaHome,
   FaUserPlus,
@@ -12,13 +13,15 @@ import {
   FaTimes
 } from "react-icons/fa";
 
+
+
 import { FaRegPenToSquare } from "react-icons/fa6";
 
 import Login from "./pages/login";
 import Register from "./pages/register";
 import Profile from "./pages/profile";
 import PostFeed from "./components/postFeed";
-import UserMenu from "./components/UserMenu";
+import UserMenu from "./components/userMenu";
 import { logoutUser } from "./services/authService";
 import "./index.css";
 
