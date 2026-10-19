@@ -4,8 +4,7 @@ import {
   logoutUser,
   // getAll
 } from "../services/auth.service.js";
-
-
+import User from "../models/user.js";
 // REGISTER
 export const register = async (
   req,

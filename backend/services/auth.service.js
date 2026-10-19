@@ -1,19 +1,19 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import user from "../models/user.js";
-import session from "../models/session.js";
+
+import User from "../models/user.js";
+import Session from "../models/session.js";
 
 import { generateToken } from "../utils/generateToken.js";
-
 
 // REGISTER USER
 export const registerUser = async ({
   name,
   username,
   email,
-  password
+  password,
 }) => {
-  // Check email
+  // Check whether the email is already registered.
   const existingEmail = await User.findOne({ email });
 
   if (existingEmail) {
@@ -22,7 +22,7 @@ export const registerUser = async ({
     throw error;
   }
 
-  // Check username
+  // Check whether the username is already taken.
   const existingUsername = await User.findOne({ username });
 
   if (existingUsername) {
@@ -31,120 +31,96 @@ export const registerUser = async ({
     throw error;
   }
 
-  // Hash password
+  // Hash the password before saving it.
   const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-  const hashedPassword = await bcrypt.hash(
-    password,
-    salt
-  );
-
-  // Create user
-  const user = await User.create({
+  // Create the user.
+  const createdUser = await User.create({
     name,
     username,
     email,
-    password: hashedPassword
+    password: hashedPassword,
   });
 
+  // Return public user details only.
   return {
-    id: user._id,
-    name: user.name,
-    username: user.username,
-    email: user.email,
-    bio: user.bio,
-    profilePicture: user.profilePicture,
-    role: user.role,
-    createdAt: user.createdAt
+    id: createdUser._id,
+    name: createdUser.name,
+    username: createdUser.username,
+    email: createdUser.email,
+    bio: createdUser.bio,
+    profilePicture: createdUser.profilePicture,
+    role: createdUser.role,
+    createdAt: createdUser.createdAt,
   };
 };
 
-
 // LOGIN USER
-export const loginUser = async ({
-  email,
-  password
-}) => {
-  // Find user
-  const user = await User.findOne({ email });
+export const loginUser = async ({ email, password }) => {
+  // Find the user by email.
+  const foundUser = await User.findOne({ email });
 
-  if (!user) {
-    const error = new Error(
-      "Invalid email or password"
-    );
-
+  if (!foundUser) {
+    const error = new Error("Invalid email or password");
     error.statusCode = 401;
-
     throw error;
   }
 
-  // Compare password
-  const isPasswordCorrect =
-    await bcrypt.compare(
-      password,
-      user.password
-    );
+  // Verify the password.
+  const isPasswordCorrect = await bcrypt.compare(
+    password,
+    foundUser.password
+  );
 
   if (!isPasswordCorrect) {
-    const error = new Error(
-      "Invalid email or password"
-    );
-
+    const error = new Error("Invalid email or password");
     error.statusCode = 401;
-
     throw error;
   }
 
-  // Create unique session ID
+  // Generate a unique session ID.
   const sessionId = crypto.randomUUID();
 
-  // Calculate session expiration
+  // Set the session expiration to seven days.
   const expiresAt = new Date(
     Date.now() + 7 * 24 * 60 * 60 * 1000
   );
 
-  // Save session
-  await session.create({
-    user: user._id,
+  // Save the session in MongoDB.
+  await Session.create({
+    user: foundUser._id,
     sessionId,
-    expiresAt
+    expiresAt,
   });
 
-  // Generate JWT
-  const token = generateToken(
-    user._id,
-    sessionId
-  );
+  // Generate the JWT.
+  const token = generateToken(foundUser._id, sessionId);
 
+  // Preserve the existing login response structure.
   return {
     token,
-
     user: {
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      bio: user.bio,
-      profilePicture: user.profilePicture,
-      role: user.role
-    }
+      id: foundUser._id,
+      name: foundUser.name,
+      username: foundUser.username,
+      email: foundUser.email,
+      bio: foundUser.bio,
+      profilePicture: foundUser.profilePicture,
+      role: foundUser.role,
+    },
   };
 };
 
-
 // LOGOUT USER
 export const logoutUser = async (sessionId) => {
-  const session = await session.findOneAndDelete({
-    sessionId
+  const deletedSession = await Session.findOneAndDelete({
+    sessionId,
   });
 
-  if (!session) {
-    const error = new Error(
-      "Session not found"
-    );
-
+  if (!deletedSession) {
+    const error = new Error("Session not found");
     error.statusCode = 404;
-
     throw error;
   }
 
