@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import User from "../models/User.js";
+import user from "../models/user.js";
 import session from "../models/session.js";
 
 import { generateToken } from "../utils/generateToken.js";
