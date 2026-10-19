@@ -1,9 +1,14 @@
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { connectDB } from "./config/db.js";
+
 import authRoutes from "./routes/auth.route.js";
 import postRoutes from "./routes/post.route.js";
 import questionRoutes from "./routes/question.route.js";
@@ -11,8 +16,6 @@ import answerRoutes from "./routes/answer.route.js";
 import voteRoutes from "./routes/vote.route.js";
 import commentRoutes from "./routes/comment.route.js";
 import userRoutes from "./routes/user.route.js";
-import path from "path";
-import { fileURLToPath } from "url";
 import notificationRoutes from "./routes/notification.route.js";
 
 dotenv.config();
@@ -22,37 +25,54 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Frontend URL
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// Allowed frontend origins.
+// CLIENT_URL in Render should contain your main Vercel frontend URL.
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://quora-nhfdy0tgl-eneojo111s-projects.vercel.app",
+  ...(process.env.CLIENT_URL
+    ? process.env.CLIENT_URL.split(",").map((url) => url.trim())
+    : []),
+].filter(Boolean);
 
-// CORS configuration - register before routes and other middleware
+// CORS configuration must be registered before API routes.
 app.use(
   cors({
-    origin: CLIENT_URL,
-    credentials: true,
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header, such as server-to-server requests.
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(new Error("Origin not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
-// Security middleware
+// Security middleware.
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
   })
 );
 
-// Request logging
+// Request logging.
 app.use(morgan("dev"));
 
-// Parse incoming request bodies
+// Parse incoming request bodies.
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
+// Serve uploaded images and other uploaded files.
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// API routes
+// API routes.
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/questions", questionRoutes);
@@ -62,7 +82,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// Home route
+// Home route.
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -70,7 +90,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// Handle unknown API routes
+// Handle unknown API routes.
 app.use("/api", (req, res) => {
   res.status(404).json({
     success: false,
@@ -78,7 +98,7 @@ app.use("/api", (req, res) => {
   });
 });
 
-// Global error handler
+// Global error handler.
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
 
@@ -88,7 +108,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server after connecting to MongoDB
+// Start server after connecting to MongoDB.
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
@@ -96,8 +116,8 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, () => {
-      console.log(`Server running on PORT ${PORT}`);
-      console.log(`Allowed frontend origin: ${CLIENT_URL}`);
+      console.log(`Server running on port ${PORT}`);
+      console.log("Allowed frontend origins:", allowedOrigins);
     });
   } catch (error) {
     console.error("Failed to connect to MongoDB:", error.message);
@@ -106,4 +126,3 @@ const startServer = async () => {
 };
 
 startServer();
-
