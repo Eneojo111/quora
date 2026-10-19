@@ -1,55 +1,76 @@
 import api from "./api";
 
-// Field name your avatar upload expects. Check the `.single("...")` call
-// inside `uploadAvatar` in your backend upload.middleware.js and change this
-// one line if it isn't "avatar".
+// Field name expected by your backend avatar upload middleware.
 const AVATAR_FIELD = "avatar";
 
-const API_ORIGIN =
-  (api.defaults.baseURL || "").replace(/\/api\/?$/, "") ||
-  "http://localhost:5000";
+// Get the backend origin from the shared Axios configuration.
+// This supports both local development and your deployed Render backend.
+const API_ORIGIN = (api.defaults.baseURL || "/api").replace(/\/api\/?$/, "");
 
+// Convert relative image paths into complete URLs.
+// Example: /uploads/posts/image.jpg
+// becomes https://quora-hih3.onrender.com/uploads/posts/image.jpg
 export const assetUrl = (path) => {
   if (!path) return "";
-  return /^https?:\/\//.test(path) ? path : `${API_ORIGIN}${path}`;
+
+  // Return the URL unchanged if it is already absolute.
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  // Ensure the path starts with a slash.
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  return `${API_ORIGIN}${normalizedPath}`;
 };
 
-export const errorMessage = (err, fallback) =>
+// Return a useful error message from an API request.
+export const errorMessage = (err, fallback = "Something went wrong.") =>
   err?.response?.data?.message || err?.message || fallback;
 
-// The logged-in user's full profile (includes followers and following).
+// Get the currently logged-in user's profile.
 export async function getMyProfile() {
   const res = await api.get("/users/me");
   return res.data.data;
 }
 
-// Posts written by one user, newest first.
+// Get posts created by a user, newest first.
 export async function getMyPosts(userId, page = 1, limit = 50) {
   const res = await api.get("/posts", {
-    params: { author: userId, page, limit },
+    params: {
+      author: userId,
+      page,
+      limit,
+    },
   });
 
+  const result = res.data.data;
+
   return {
-    posts: res.data.data || [],
-    pagination: res.data.pagination || null,
+    posts: Array.isArray(result) ? result : result?.posts || [],
+    pagination: res.data.pagination || result?.pagination || null,
   };
 }
 
-// Updates name, username and/or bio, e.g. updateMyProfile({ bio: "Hello" }).
+// Update the logged-in user's profile information.
 export async function updateMyProfile(fields) {
   const res = await api.patch("/users/me", fields);
   return res.data.data;
 }
 
-// Uploads a new profile picture (a File object).
+// Upload a new profile picture.
+// The file must be a browser File object.
 export async function updateMyAvatar(file) {
+  if (!file) {
+    throw new Error("Please select a profile picture.");
+  }
+
   const form = new FormData();
   form.append(AVATAR_FIELD, file);
 
-  const res = await api.patch("/users/me/avatar", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await api.patch("/users/me/avatar", form);
 
   return res.data.data;
 }
+
 
