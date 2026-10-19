@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-
 import User from "../models/user.js";
 import Session from "../models/session.js";
 
