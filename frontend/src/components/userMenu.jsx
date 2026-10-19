@@ -30,11 +30,8 @@ export default function UserMenu({ user, onLogout, onProfile }) {
   const profilePictureUrl = user?.profilePicture
     ? user.profilePicture.startsWith("http")
       ? user.profilePicture
-      : `http://localhost:5000${
-          user.profilePicture.startsWith("/")
-            ? user.profilePicture
-            : `/${user.profilePicture}`
-        }`
+      : `${import.meta.env.VITE_API_URL}/api${user.profilePicture.startsWith("/") ? user.profilePicture : `/\${user.profilePicture}`}`
+
     : "";
 
   // Reset the fallback whenever the profile picture changes.
@@ -159,11 +156,10 @@ export default function UserMenu({ user, onLogout, onProfile }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((previous) => !previous)}
-        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-          open
+        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${open
             ? "bg-[#303030]"
             : "bg-transparent hover:bg-[#292929]"
-        }`}
+          }`}
       >
         {profilePictureUrl && !imageFailed ? (
           <img
@@ -224,7 +220,7 @@ export default function UserMenu({ user, onLogout, onProfile }) {
             <div className="flex w-full min-w-0 items-center justify-between gap-3">
               <span className="truncate text-[22px] font-bold leading-7">
                 {user?.name || user?.username || "Your profile"}
-                
+
               </span>
 
               <FaChevronRight
@@ -307,11 +303,10 @@ export default function UserMenu({ user, onLogout, onProfile }) {
               <span>Dark mode</span>
 
               <span
-                className={`rounded-full px-2 py-[3px] text-[12px] font-semibold ${
-                  darkMode
+                className={`rounded-full px-2 py-[3px] text-[12px] font-semibold ${darkMode
                     ? "bg-[#20365b] text-[#80aaff]"
                     : "bg-[#444444] text-[#dddddd]"
-                }`}
+                  }`}
               >
                 {darkMode ? "ON" : "OFF"}
               </span>

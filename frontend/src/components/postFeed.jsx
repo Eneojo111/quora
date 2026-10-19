@@ -25,7 +25,7 @@ import {
     unfollowUser,
 } from "../services/userService.js";
 
-const API_ORIGIN = "http://localhost:5000";
+const API_ORIGIN =`${import.meta.env.VITE_API_URL}/api`;
 
 function assetUrl(path) {
     if (!path) return "";
