@@ -29,8 +29,8 @@ const app = express();
 // CLIENT_URL in Render should contain your main Vercel frontend URL.
 const allowedOrigins = [
   "http://localhost:5173",
-   "https://quora-rhhk2cu89-eneojo111s-projects.vercel.app",
-  "https://quora-nhfdy0tgl-eneojo111s-projects.vercel.app",
+  "https://quora-rhhk2cu89-eneojo111s-projects.vercel.app",
+  "https://quora-swart.vercel.app",
   ...(process.env.CLIENT_URL
     ? process.env.CLIENT_URL.split(",").map((url) => url.trim())
     : []),
