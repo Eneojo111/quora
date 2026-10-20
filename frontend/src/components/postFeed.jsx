@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
     getPosts,
@@ -25,11 +26,27 @@ import {
     unfollowUser,
 } from "../services/userService.js";
 
-const API_ORIGIN =`${import.meta.env.VITE_API_URL}/api`;
+// The frontend API URL may include /api.
+// Uploaded files are served from the backend root, not from /api.
+const BACKEND_ORIGIN = (
+    import.meta.env.VITE_API_URL || "https://quora-hih3.onrender.com"
+)
+    .replace(/\/api\/?$/, "")
+    .replace(/\/+$/, "");
 
+// Convert relative image paths into complete backend URLs.
 function assetUrl(path) {
-    if (!path) return "";
-    return path.startsWith("http") ? path : `${API_ORIGIN}${path}`;
+    if (!path || typeof path !== "string") return "";
+
+    // Preserve fully qualified image URLs.
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+
+    // Handle paths such as /uploads/posts/photo.jpg.
+    const cleanPath = path.replace(/^\/+/, "");
+
+    return `${BACKEND_ORIGIN}/${cleanPath}`;
 }
 
 function formatShortDate(date) {
@@ -72,19 +89,19 @@ export default function PostFeed({ user }) {
     const [page, setPage] = useState(1);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Follow feature state
+    // Follow feature state.
     const [followingIds, setFollowingIds] = useState(new Set());
     const [followLoadingId, setFollowLoadingId] = useState(null);
     const [followError, setFollowError] = useState("");
 
-    // Post editing and deletion state
+    // Post editing and deletion state.
     const [editingPost, setEditingPost] = useState(null);
     const [editContent, setEditContent] = useState("");
     const [savingEdit, setSavingEdit] = useState(false);
     const [deletingPostId, setDeletingPostId] = useState(null);
     const [actionError, setActionError] = useState("");
 
-    // Comment section and three-dot menu state
+    // Comment section and three-dot menu state.
     const [openCommentsId, setOpenCommentsId] = useState(null);
     const [openMenuId, setOpenMenuId] = useState(null);
 
@@ -102,7 +119,9 @@ export default function PostFeed({ user }) {
         };
 
         const handleKeyDown = (event) => {
-            if (event.key === "Escape") setOpenMenuId(null);
+            if (event.key === "Escape") {
+                setOpenMenuId(null);
+            }
         };
 
         document.addEventListener("mousedown", handleMouseDown);
@@ -347,7 +366,9 @@ export default function PostFeed({ user }) {
                 setEditContent("");
             }
 
-            if (openCommentsId === post._id) setOpenCommentsId(null);
+            if (openCommentsId === post._id) {
+                setOpenCommentsId(null);
+            }
 
             // Reload counts and pagination after deletion.
             setRefreshKey((current) => current + 1);
@@ -364,17 +385,17 @@ export default function PostFeed({ user }) {
     return (
         <>
             <div className="qf-layout">
-                {/* Left column: display-only spaces sidebar */}
+                {/* Left column: display-only spaces sidebar. */}
                 <FeedSidebar />
 
-                {/* Centre column: composer + feed */}
+                {/* Centre column: composer + feed. */}
                 <div className="qf-center">
                     <CreatePost onPostCreated={handlePostCreated} />
 
                     <section className="post-feed" id="posts">
                         <div className="feed-heading"></div>
 
-                        {/* Follow feature errors */}
+                        {/* Follow feature errors. */}
                         {followError && (
                             <p className="post-action-error" role="alert">
                                 {followError}
@@ -388,7 +409,7 @@ export default function PostFeed({ user }) {
                             </p>
                         )}
 
-                        {/* Post editing and deletion errors */}
+                        {/* Post editing and deletion errors. */}
                         {actionError && !editingPost && (
                             <p className="post-action-error" role="alert">
                                 {actionError}
@@ -442,8 +463,7 @@ export default function PostFeed({ user }) {
                                 const isOwner =
                                     currentUserId &&
                                     authorId &&
-                                    String(currentUserId) ===
-                                        String(authorId);
+                                    String(currentUserId) === String(authorId);
 
                                 const authorName =
                                     author.name ||
@@ -472,6 +492,14 @@ export default function PostFeed({ user }) {
                                                         author.profilePicture
                                                     )}
                                                     alt=""
+                                                    onError={(event) => {
+                                                        console.error(
+                                                            "Failed to load profile image:",
+                                                            event.currentTarget.src
+                                                        );
+                                                        event.currentTarget.style.display =
+                                                            "none";
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="author-avatar author-placeholder">
@@ -483,11 +511,8 @@ export default function PostFeed({ user }) {
 
                                             <div className="author-details">
                                                 <div className="author-name-row">
-                                                    <strong>
-                                                        {authorName}
-                                                    </strong>
+                                                    <strong>{authorName}</strong>
 
-                                                    {/* Follow button for other users only */}
                                                     {!isOwner &&
                                                         currentUserId &&
                                                         authorId && (
@@ -498,13 +523,13 @@ export default function PostFeed({ user }) {
                                                                 >
                                                                     ·
                                                                 </span>
+
                                                                 <button
                                                                     type="button"
-                                                                    className={`follow-button ${
-                                                                        isFollowing
+                                                                    className={`follow-button ${isFollowing
                                                                             ? "is-following"
                                                                             : ""
-                                                                    }`}
+                                                                        }`}
                                                                     onClick={() =>
                                                                         handleToggleFollow(
                                                                             authorId
@@ -530,7 +555,6 @@ export default function PostFeed({ user }) {
                                                         )}
                                                 </div>
 
-                                                {/* Date directly under the username */}
                                                 <time
                                                     className="author-date"
                                                     dateTime={
@@ -562,24 +586,48 @@ export default function PostFeed({ user }) {
 
                                         {images.length > 0 && (
                                             <div className="post-images">
-                                                {images.map(
-                                                    (image, index) => (
+                                                {images.map((image, index) => {
+                                                    // Support either a string
+                                                    // path or an image object.
+                                                    const imagePath =
+                                                        typeof image === "string"
+                                                            ? image
+                                                            : image?.url ||
+                                                            image?.path ||
+                                                            image?.secure_url ||
+                                                            "";
+
+                                                    const imageUrl =
+                                                        assetUrl(imagePath);
+
+                                                    return (
                                                         <img
                                                             key={`${post._id}-image-${index}`}
-                                                            src={assetUrl(
-                                                                image
-                                                            )}
-                                                            alt={`Post image ${
-                                                                index + 1
-                                                            }`}
+                                                            src={imageUrl}
+                                                            alt={`Post image ${index + 1
+                                                                }`}
                                                             loading="lazy"
+                                                            onError={(event) => {
+                                                                console.error(
+                                                                    "Failed to load post image:",
+                                                                    {
+                                                                        imagePath,
+                                                                        attemptedUrl:
+                                                                            event
+                                                                                .currentTarget
+                                                                                .src,
+                                                                    }
+                                                                );
+                                                                event.currentTarget.style.display =
+                                                                    "none";
+                                                            }}
                                                         />
-                                                    )
-                                                )}
+                                                    );
+                                                })}
                                             </div>
                                         )}
 
-                                        {/* Interaction row */}
+                                        {/* Interaction row. */}
                                         <div className="post-actions">
                                             <VoteButtons
                                                 targetType="post"
@@ -588,11 +636,10 @@ export default function PostFeed({ user }) {
 
                                             <button
                                                 type="button"
-                                                className={`action-pill ${
-                                                    commentsOpen
+                                                className={`action-pill ${commentsOpen
                                                         ? "is-active"
                                                         : ""
-                                                }`}
+                                                    }`}
                                                 onClick={() =>
                                                     setOpenCommentsId(
                                                         commentsOpen
@@ -609,13 +656,11 @@ export default function PostFeed({ user }) {
                                             >
                                                 <MessageCircle size={20} />
                                                 {commentCount !== null && (
-                                                    <span>
-                                                        {commentCount}
-                                                    </span>
+                                                    <span>{commentCount}</span>
                                                 )}
                                             </button>
 
-                                            {/* Reshare: visible only, no action yet */}
+                                            {/* Reshare: visible only, no action yet. */}
                                             <button
                                                 type="button"
                                                 className="action-pill"
@@ -630,7 +675,7 @@ export default function PostFeed({ user }) {
                                                 <Repeat2 size={20} />
                                             </button>
 
-                                            {/* Three-dot menu: owner only */}
+                                            {/* Three-dot menu: owner only. */}
                                             {isOwner && (
                                                 <div
                                                     className="post-menu"
@@ -648,13 +693,9 @@ export default function PostFeed({ user }) {
                                                         }
                                                         aria-label="More options"
                                                         aria-haspopup="menu"
-                                                        aria-expanded={
-                                                            menuOpen
-                                                        }
+                                                        aria-expanded={menuOpen}
                                                     >
-                                                        <MoreHorizontal
-                                                            size={22}
-                                                        />
+                                                        <MoreHorizontal size={22} />
                                                     </button>
 
                                                     {menuOpen && (
@@ -675,11 +716,7 @@ export default function PostFeed({ user }) {
                                                                     );
                                                                 }}
                                                             >
-                                                                <Pencil
-                                                                    size={
-                                                                        16
-                                                                    }
-                                                                />
+                                                                <Pencil size={16} />
                                                                 Edit Post
                                                             </button>
 
@@ -700,13 +737,9 @@ export default function PostFeed({ user }) {
                                                                     );
                                                                 }}
                                                             >
-                                                                <Trash2
-                                                                    size={
-                                                                        16
-                                                                    }
-                                                                />
+                                                                <Trash2 size={16} />
                                                                 {deletingPostId ===
-                                                                post._id
+                                                                    post._id
                                                                     ? "Deleting..."
                                                                     : "Delete Post"}
                                                             </button>
@@ -716,7 +749,6 @@ export default function PostFeed({ user }) {
                                             )}
                                         </div>
 
-                                        {/* Expands directly below the post */}
                                         {commentsOpen && (
                                             <CommentSection
                                                 postId={post._id}
@@ -728,7 +760,7 @@ export default function PostFeed({ user }) {
                             })
                         )}
 
-                        {/* Pagination */}
+                        {/* Pagination. */}
                         {!loading &&
                             !error &&
                             pagination &&
@@ -748,16 +780,13 @@ export default function PostFeed({ user }) {
                                     </button>
 
                                     <span>
-                                        Page{" "}
-                                        {pagination.currentPage ?? page} of{" "}
+                                        Page {pagination.currentPage ?? page} of{" "}
                                         {pagination.totalPages}
                                     </span>
 
                                     <button
                                         type="button"
-                                        disabled={
-                                            page >= pagination.totalPages
-                                        }
+                                        disabled={page >= pagination.totalPages}
                                         onClick={() =>
                                             setPage((current) => current + 1)
                                         }
@@ -769,11 +798,11 @@ export default function PostFeed({ user }) {
                     </section>
                 </div>
 
-                {/* Right column (empty, as on the reference) */}
+                {/* Right column. */}
                 <aside className="qf-right" aria-hidden="true" />
             </div>
 
-            {/* Edit post dialog */}
+            {/* Edit post dialog. */}
             {editingPost && (
                 <div
                     className="edit-post-overlay"
@@ -847,5 +876,6 @@ export default function PostFeed({ user }) {
         </>
     );
 }
+
 
 
