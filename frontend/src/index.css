@@ -289,7 +289,6 @@ code {
 .post-card {
   margin-bottom: 22px;
   padding: 22px;
-  margin-left: 5px;
   background: #ffffff;
   border: 1px solid black;
   border-radius: 14px;
@@ -3346,6 +3345,7 @@ code {
   color: #fff;
   user-select: none;
   cursor: default;
+  margin-right: -10px;
 }
 
 .qf-left::-webkit-scrollbar {
