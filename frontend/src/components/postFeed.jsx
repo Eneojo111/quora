@@ -480,6 +480,7 @@ export default function PostFeed({ user }) {
                                 const commentCount = getCommentCount(post);
 
                                 return (
+
                                     <article
                                         className="post-card"
                                         key={post._id}
@@ -527,8 +528,8 @@ export default function PostFeed({ user }) {
                                                                 <button
                                                                     type="button"
                                                                     className={`follow-button ${isFollowing
-                                                                            ? "is-following"
-                                                                            : ""
+                                                                        ? "is-following"
+                                                                        : ""
                                                                         }`}
                                                                     onClick={() =>
                                                                         handleToggleFollow(
@@ -637,8 +638,8 @@ export default function PostFeed({ user }) {
                                             <button
                                                 type="button"
                                                 className={`action-pill ${commentsOpen
-                                                        ? "is-active"
-                                                        : ""
+                                                    ? "is-active"
+                                                    : ""
                                                     }`}
                                                 onClick={() =>
                                                     setOpenCommentsId(

@@ -289,10 +289,12 @@ code {
 .post-card {
   margin-bottom: 22px;
   padding: 22px;
+  margin-left: 5px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid black;
   border-radius: 14px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+
 }
 
 .post-author {
@@ -358,7 +360,8 @@ code {
 
 .post-actions {
   padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 2px;
+  /* border-top: 1px solid #f0f0f0; */
 }
 
 .feed-status,
@@ -430,7 +433,7 @@ code {
   gap: 16px;
   padding: 16px 5%;
   background: #16171d;
-  border-bottom: 1px solid #e5e7eb;
+  /* border-bottom: 1px solid #e5e7eb; */
 }
 
 .app-brand {
@@ -447,6 +450,7 @@ code {
   font-size: 14px;
   height: 30px;
   width: 30px;
+  border-radius: 100%;
 }
 
 

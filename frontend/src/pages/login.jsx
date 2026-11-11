@@ -19,10 +19,14 @@ export default function Login({ onLogin, onSwitchToRegister }) {
             const result = await loginUser(email, password);
 
             if (!result?.user) {
-                throw new Error("Login succeeded, but no user information was returned.");
-            }
+    throw new Error("Login succeeded, but no user information was returned.");
+}
 
-            onLogin(result.user);
+if (!["admin", "user"].includes(result.user.role)) {
+    throw new Error("User role could not be verified.");
+}
+
+onLogin(result.user);
         } catch (err) {
             setError(
                 err.response?.data?.message ||

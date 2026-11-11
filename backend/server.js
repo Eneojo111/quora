@@ -6,6 +6,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import adminRoutes from "./routes/admin.route.js";
 
 import { connectDB } from "./config/db.js";
 
@@ -74,6 +75,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes.
+app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/questions", questionRoutes);
