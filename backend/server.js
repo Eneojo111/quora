@@ -42,10 +42,10 @@ const normalizeOrigin = (value) => {
 const allowedOrigins = new Set(
   [
     "http://localhost:5173",
-
-    // Main production frontend
-    "quora-clone-nine-woad.vercel.app",
-    // "https://quora-web.vercel.app",
+     "http://localhost:3000", 
+       // Main production frontend
+     "quora-pfqrioux5-eneojo111s-projects.vercel.app"
+  
 
     // Previously used Vercel deployments
     "https://quora-rhhk2cu89-eneojo111s-projects.vercel.app",
