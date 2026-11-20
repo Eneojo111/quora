@@ -29,24 +29,24 @@ import {
 // The frontend API URL may include /api.
 // Uploaded files are served from the backend root, not from /api.
 const BACKEND_ORIGIN = (
-    import.meta.env.VITE_API_URL || "https://quora-hih3.onrender.com"
+  import.meta.env.VITE_API_URL || "https://quora-hih3.onrender.com"
 )
-    .replace(/\/api\/?$/, "")
-    .replace(/\/+$/, "");
+  .replace(/\/api\/?$/, "")
+  .replace(/\/+$/, "");
 
 // Convert relative image paths into complete backend URLs.
 function assetUrl(path) {
-    if (!path || typeof path !== "string") return "";
+  if (!path || typeof path !== "string") return "";
 
-    // Preserve fully qualified image URLs.
-    if (/^https?:\/\//i.test(path)) {
-        return path;
-    }
+  // Cloudinary URLs should remain unchanged
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
 
-    // Handle paths such as /uploads/posts/photo.jpg.
-    const cleanPath = path.replace(/^\/+/, "");
+  // Resolve old relative image paths
+  const cleanPath = path.replace(/^\/+/, "");
 
-    return `${BACKEND_ORIGIN}/${cleanPath}`;
+  return `${BACKEND_ORIGIN}/${cleanPath}`;
 }
 
 function formatShortDate(date) {
