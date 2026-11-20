@@ -31,30 +31,26 @@ export const createPost = async (content, images = []) => {
         formData.append("images", image);
     });
 
-    const response = await api.post("/posts", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    });
+    const response = await api.post("/posts", formData);
 
     return response.data.data;
 };
 
 
- // Update an existing post
+// Update an existing post
 export const updatePost = async (postId, content) => {
-  const response = await api.put(`/posts/${postId}`, {
-    content: content.trim(),
-  });
+    const response = await api.put(`/posts/${postId}`, {
+        content: content.trim(),
+    });
 
-  return response.data.data;
+    return response.data.data;
 };
 
 // Delete an existing post
 export const deletePost = async (postId) => {
-  const response = await api.delete(`/posts/${postId}`);
+    const response = await api.delete(`/posts/${postId}`);
 
-  return response.data;
+    return response.data;
 };
 
 

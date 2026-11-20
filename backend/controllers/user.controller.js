@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import User from "../models/user.js";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
 // GET MY PROFILE
 export const getMyProfile = async (req, res) => {

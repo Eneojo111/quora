@@ -44,12 +44,11 @@ const allowedOrigins = new Set(
     "http://localhost:5173",
      "http://localhost:3000", 
        // Main production frontend
-     "quora-pfqrioux5-eneojo111s-projects.vercel.app"
-  
+     "quora-pfqrioux5-eneojo111s-projects.vercel.app",
+        "https://quora-swart.vercel.app",
 
-    // Previously used Vercel deployments
-    "https://quora-rhhk2cu89-eneojo111s-projects.vercel.app",
-    "https://quora-swart.vercel.app",
+  
+ 
 
     // Additional frontend URLs from environment variables
     ...(process.env.CLIENT_URL || "").split(",")
@@ -122,6 +121,8 @@ app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))
 );
+
+
 
 // API routes
 app.use("/api/admin", adminRoutes);

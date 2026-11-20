@@ -13,6 +13,7 @@
   "description": "Backend API for a Quora-style question and answer platform",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",

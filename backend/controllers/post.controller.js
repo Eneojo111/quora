@@ -1,4 +1,6 @@
 
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
+
 import {
   createPost as createPostService,
   getAllPosts as getAllPostsService,
@@ -11,21 +13,9 @@ import {
 export const createPost = async (req, res) => {
   try {
     const content = req.body?.content;
+    const files = req.files || [];
 
-    const uploadedImages = (req.files || []).map(
-      (file) => `/uploads/posts/${file.filename}`
-    );
-
-    if (
-      (typeof content !== "string" || !content.trim()) &&
-      uploadedImages.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "A post must contain text or at least one image"
-      });
-    }
-
+    // Validate content type
     if (content !== undefined && typeof content !== "string") {
       return res.status(400).json({
         success: false,
@@ -33,13 +23,38 @@ export const createPost = async (req, res) => {
       });
     }
 
-    if (content && content.trim().length > 10000) {
+    // Validate content length
+    if (typeof content === "string" && content.trim().length > 10000) {
       return res.status(400).json({
         success: false,
         message: "Post content cannot exceed 10,000 characters"
       });
     }
 
+    // A post must contain text or at least one image
+    if (
+      (!content || !content.trim()) &&
+      files.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A post must contain text or at least one image"
+      });
+    }
+
+    // Upload images to Cloudinary
+    const uploadedImages = await Promise.all(
+      files.map(async (file) => {
+        const uploadedImage = await uploadToCloudinary(
+          file.buffer,
+          "quora/posts"
+        );
+
+        return uploadedImage.secure_url;
+      })
+    );
+
+    // Save post in MongoDB
     const post = await createPostService({
       authorId: req.user._id,
       content: typeof content === "string" ? content.trim() : "",
@@ -51,6 +66,7 @@ export const createPost = async (req, res) => {
       message: "Post created successfully",
       data: post
     });
+
   } catch (error) {
     console.error("Create post error:", error);
 
@@ -60,6 +76,7 @@ export const createPost = async (req, res) => {
     });
   }
 };
+
 
 // GET POSTS
 export const getAllPosts = async (req, res) => {
@@ -78,6 +95,7 @@ export const getAllPosts = async (req, res) => {
       data: result.posts,
       pagination: result.pagination
     });
+
   } catch (error) {
     console.error("Get posts error:", error);
 
@@ -87,6 +105,7 @@ export const getAllPosts = async (req, res) => {
     });
   }
 };
+
 
 // GET ONE POST
 export const getPostById = async (req, res) => {
@@ -98,6 +117,7 @@ export const getPostById = async (req, res) => {
       message: "Post retrieved successfully",
       data: post
     });
+
   } catch (error) {
     console.error("Get single post error:", error);
 
@@ -107,6 +127,7 @@ export const getPostById = async (req, res) => {
     });
   }
 };
+
 
 // UPDATE POST
 export const updatePost = async (req, res) => {
@@ -156,6 +177,7 @@ export const updatePost = async (req, res) => {
       message: "Post updated successfully",
       data: post
     });
+
   } catch (error) {
     console.error("Update post error:", error);
 
@@ -165,6 +187,7 @@ export const updatePost = async (req, res) => {
     });
   }
 };
+
 
 // DELETE POST
 export const deletePost = async (req, res) => {
@@ -178,6 +201,7 @@ export const deletePost = async (req, res) => {
       success: true,
       message: "Post deleted successfully"
     });
+
   } catch (error) {
     console.error("Delete post error:", error);
 
@@ -187,6 +211,7 @@ export const deletePost = async (req, res) => {
     });
   }
 };
+
 
 
 
