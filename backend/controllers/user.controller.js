@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 import User from "../models/user.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
@@ -10,21 +11,21 @@ export const getMyProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Profile retrieved successfully",
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error("Get my profile error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve profile"
+      message: "Failed to retrieve profile",
     });
   }
 };
@@ -41,21 +42,21 @@ export const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User profile not found"
+        message: "User profile not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "User profile retrieved successfully",
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error("Get user profile error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve user profile"
+      message: "Failed to retrieve user profile",
     });
   }
 };
@@ -75,7 +76,8 @@ export const updateMyProfile = async (req, res) => {
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Provide at least one field to update: name, username, or bio"
+        message:
+          "Provide at least one field to update: name, username, or bio",
       });
     }
 
@@ -83,7 +85,7 @@ export const updateMyProfile = async (req, res) => {
       if (typeof updates.username !== "string") {
         return res.status(400).json({
           success: false,
-          message: "Username must be a string"
+          message: "Username must be a string",
         });
       }
 
@@ -95,7 +97,7 @@ export const updateMyProfile = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Username must be between 3 and 30 characters"
+          message: "Username must be between 3 and 30 characters",
         });
       }
     }
@@ -108,7 +110,7 @@ export const updateMyProfile = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Name must be between 2 and 50 characters"
+          message: "Name must be between 2 and 50 characters",
         });
       }
 
@@ -119,7 +121,7 @@ export const updateMyProfile = async (req, res) => {
       if (typeof updates.bio !== "string") {
         return res.status(400).json({
           success: false,
-          message: "Bio must be a string"
+          message: "Bio must be a string",
         });
       }
 
@@ -128,7 +130,7 @@ export const updateMyProfile = async (req, res) => {
       if (updates.bio.length > 160) {
         return res.status(400).json({
           success: false,
-          message: "Bio cannot exceed 160 characters"
+          message: "Bio cannot exceed 160 characters",
         });
       }
     }
@@ -138,21 +140,21 @@ export const updateMyProfile = async (req, res) => {
       { $set: updates },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     ).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error("Update profile error:", error);
@@ -160,66 +162,82 @@ export const updateMyProfile = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: "That username is already taken"
+        message: "That username is already taken",
       });
     }
 
     if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update profile"
+      message: "Failed to update profile",
     });
   }
 };
 
-// UPLOAD MY AVATAR
+// UPLOAD MY AVATAR TO CLOUDINARY
 export const uploadMyAvatar = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "Please select an image to upload"
+        message: "Please select an image to upload",
       });
     }
 
-    const profilePicture = `/uploads/avatars/${req.file.filename}`;
+    // Upload the image buffer to Cloudinary.
+    const uploadedImage = await uploadToCloudinary(
+      req.file.buffer,
+      "quora/avatars"
+    );
 
+    if (!uploadedImage?.secure_url) {
+      throw new Error("Cloudinary did not return an image URL.");
+    }
+
+    // Save the Cloudinary URL to the user's MongoDB document.
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: { profilePicture } },
-      { new: true, runValidators: true }
+      {
+        $set: {
+          profilePicture: uploadedImage.secure_url,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
     ).select("-password");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Profile picture updated successfully",
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error("Upload avatar error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update profile picture"
+      message:
+        error.message || "Failed to update profile picture",
     });
   }
 };
 
-
-
+// GET MY FOLLOWERS
 const getMyFollowers = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -232,25 +250,26 @@ const getMyFollowers = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Followers retrieved successfully",
-      data: user.followers
+      data: user.followers,
     });
   } catch (error) {
     console.error("Get followers error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve followers"
+      message: "Failed to retrieve followers",
     });
   }
 };
 
+// GET USERS I AM FOLLOWING
 const getMyFollowing = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -263,21 +282,21 @@ const getMyFollowing = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Following list retrieved successfully",
-      data: user.following
+      data: user.following,
     });
   } catch (error) {
     console.error("Get following error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve following list"
+      message: "Failed to retrieve following list",
     });
   }
 };
@@ -291,14 +310,14 @@ const followUser = async (req, res) => {
     if (!mongoose.isValidObjectId(userId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID"
+        message: "Invalid user ID",
       });
     }
 
     if (userId.toString() === currentUserId.toString()) {
       return res.status(400).json({
         success: false,
-        message: "You cannot follow yourself"
+        message: "You cannot follow yourself",
       });
     }
 
@@ -309,7 +328,7 @@ const followUser = async (req, res) => {
     if (!targetUser) {
       return res.status(404).json({
         success: false,
-        message: "User to follow was not found"
+        message: "User to follow was not found",
       });
     }
 
@@ -319,7 +338,7 @@ const followUser = async (req, res) => {
     if (!currentUser) {
       return res.status(404).json({
         success: false,
-        message: "Your user account was not found"
+        message: "Your user account was not found",
       });
     }
 
@@ -333,16 +352,17 @@ const followUser = async (req, res) => {
           { _id: currentUserId },
           { $addToSet: { following: targetUser._id } }
         ),
+
         User.updateOne(
           { _id: targetUser._id },
           { $addToSet: { followers: currentUserId } }
-        )
+        ),
       ]);
     }
 
     const [updatedTarget, updatedCurrent] = await Promise.all([
       User.findById(userId).select("followers following"),
-      User.findById(currentUserId).select("followers following")
+      User.findById(currentUserId).select("followers following"),
     ]);
 
     return res.status(200).json({
@@ -353,15 +373,15 @@ const followUser = async (req, res) => {
       data: {
         isFollowing: true,
         followersCount: updatedTarget.followers.length,
-        followingCount: updatedCurrent.following.length
-      }
+        followingCount: updatedCurrent.following.length,
+      },
     });
   } catch (error) {
     console.error("Follow user error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to follow user"
+      message: "Failed to follow user",
     });
   }
 };
@@ -375,14 +395,14 @@ const unfollowUser = async (req, res) => {
     if (!mongoose.isValidObjectId(userId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid user ID"
+        message: "Invalid user ID",
       });
     }
 
     if (userId.toString() === currentUserId.toString()) {
       return res.status(400).json({
         success: false,
-        message: "You cannot unfollow yourself"
+        message: "You cannot unfollow yourself",
       });
     }
 
@@ -391,7 +411,7 @@ const unfollowUser = async (req, res) => {
     if (!targetUser) {
       return res.status(404).json({
         success: false,
-        message: "User to unfollow was not found"
+        message: "User to unfollow was not found",
       });
     }
 
@@ -400,15 +420,16 @@ const unfollowUser = async (req, res) => {
         { _id: currentUserId },
         { $pull: { following: targetUser._id } }
       ),
+
       User.updateOne(
         { _id: targetUser._id },
         { $pull: { followers: currentUserId } }
-      )
+      ),
     ]);
 
     const [updatedTarget, updatedCurrent] = await Promise.all([
       User.findById(userId).select("followers following"),
-      User.findById(currentUserId).select("followers following")
+      User.findById(currentUserId).select("followers following"),
     ]);
 
     return res.status(200).json({
@@ -417,15 +438,15 @@ const unfollowUser = async (req, res) => {
       data: {
         isFollowing: false,
         followersCount: updatedTarget.followers.length,
-        followingCount: updatedCurrent.following.length
-      }
+        followingCount: updatedCurrent.following.length,
+      },
     });
   } catch (error) {
     console.error("Unfollow user error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to unfollow user"
+      message: "Failed to unfollow user",
     });
   }
 };
@@ -434,8 +455,9 @@ export {
   getMyFollowers,
   getMyFollowing,
   followUser,
-  unfollowUser
+  unfollowUser,
 };
+
 
 
 

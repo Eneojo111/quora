@@ -10,3 +10,8 @@ cloudinary.config({
 export default cloudinary;
 
 
+// console.log("Cloudinary environment check:", {
+//   cloudNameLoaded: Boolean(process.env.CLOUDINARY_CLOUD_NAME),
+//   apiKeyLoaded: Boolean(process.env.CLOUDINARY_API_KEY),
+//   apiSecretLoaded: Boolean(process.env.CLOUDINARY_API_SECRET),
+// });

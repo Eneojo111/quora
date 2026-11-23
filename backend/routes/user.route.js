@@ -41,3 +41,29 @@ router.get("/:username", getUserProfile);
 
 export default router;
 
+
+// import {
+//   getMyProfile,
+//   getUserProfile,
+//   updateMyProfile,
+//   uploadMyAvatar,
+//   getMyFollowers,
+//   getMyFollowing,
+//   followUser,
+//   unfollowUser,
+// } from "../controllers/user.controller.js";
+
+// import { protect } from "../middleware/auth.middleware.js";
+// import { uploadAvatar } from "../middleware/upload.middleware.js";
+
+// // Profile routes
+// router.get("/me", protect, getMyProfile);
+
+// router.patch("/me", protect, updateMyProfile);
+
+// router.patch(
+//   "/me/avatar",
+//   protect,
+//   uploadAvatar,
+//   uploadMyAvatar
+// );

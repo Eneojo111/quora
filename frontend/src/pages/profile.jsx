@@ -9,10 +9,11 @@ import {
 import {
   getMyProfile,
   getMyPosts,
+  updateMyAvatar,
+  updateMyProfile,
 } from "../services/profile.Services.js";
-import FollowSection from "../components/profile/followSection";
+
 import ProfileHeader from "../components/profile/profileHeader";
-import BioInput from "../components/profile/bioInput";
 import PostSearch from "../components/profile/postSearch";
 import PostList from "../components/profile/postList";
 
@@ -27,7 +28,8 @@ export default function Profile({ onBack, onProfileUpdated }) {
   const [error, setError] = useState("");
   const [postsError, setPostsError] = useState("");
 
-  // Keep profile data synchronized with localStorage and App.jsx.
+  // Keep profile data synchronized with React state,
+  // localStorage, and the parent component.
   const syncProfile = useCallback(
     (updatedProfile) => {
       if (
@@ -107,8 +109,8 @@ export default function Profile({ onBack, onProfileUpdated }) {
 
       setError(
         err?.response?.data?.message ||
-        err?.message ||
-        "Unable to load your profile. Please try again."
+          err?.message ||
+          "Unable to load your profile. Please try again."
       );
     } finally {
       setLoading(false);
@@ -163,13 +165,71 @@ export default function Profile({ onBack, onProfileUpdated }) {
       setPosts([]);
       setPostsError(
         err?.response?.data?.message ||
-        err?.message ||
-        "Unable to load your posts."
+          err?.message ||
+          "Unable to load your posts."
       );
     } finally {
       setPostsLoading(false);
     }
   }, []);
+
+  // Upload a new profile picture.
+  const handleAvatarUpload = useCallback(
+    async (file) => {
+      const updatedProfile = await updateMyAvatar(file);
+
+      if (!updatedProfile) {
+        throw new Error(
+          "The server did not return the updated profile."
+        );
+      }
+
+      syncProfile(updatedProfile);
+
+      return updatedProfile;
+    },
+    [syncProfile]
+  );
+
+  // Save the user's name to the backend.
+  const handleNameSaved = useCallback(
+    async (name) => {
+      const updatedProfile = await updateMyProfile({
+        name,
+      });
+
+      if (!updatedProfile) {
+        throw new Error(
+          "The server did not return the updated profile."
+        );
+      }
+
+      syncProfile(updatedProfile);
+
+      return updatedProfile;
+    },
+    [syncProfile]
+  );
+
+  // Save the user's bio to the backend.
+  const handleBioSaved = useCallback(
+    async (bio) => {
+      const updatedProfile = await updateMyProfile({
+        bio,
+      });
+
+      if (!updatedProfile) {
+        throw new Error(
+          "The server did not return the updated profile."
+        );
+      }
+
+      syncProfile(updatedProfile);
+
+      return updatedProfile;
+    },
+    [syncProfile]
+  );
 
   // Load the profile on mount.
   useEffect(() => {
@@ -197,19 +257,6 @@ export default function Profile({ onBack, onProfileUpdated }) {
       (post.content || "").toLowerCase().includes(query)
     );
   }, [posts, search]);
-
-  // Update the profile after saving the bio.
-  const handleBioSaved = useCallback(
-    (bio) => {
-      if (!profile) return;
-
-      syncProfile({
-        ...profile,
-        bio,
-      });
-    },
-    [profile, syncProfile]
-  );
 
   const handleRetryProfile = useCallback(() => {
     loadProfile();
@@ -244,16 +291,6 @@ export default function Profile({ onBack, onProfileUpdated }) {
     return (
       <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white">
         <div className="mx-auto max-w-3xl rounded-xl border border-neutral-800 p-6">
-          {/* {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="mb-5 text-sm text-gray-300 hover:text-white"
-            >
-              ← Back to feed
-            </button>
-          )} */}
-
           <h1 className="mb-2 text-xl font-semibold">
             Unable to load profile
           </h1>
@@ -277,7 +314,7 @@ export default function Profile({ onBack, onProfileUpdated }) {
   return (
     <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white">
       <div className="mx-auto max-w-3xl space-y-6">
-        {/* {onBack && (
+        {onBack && (
           <button
             type="button"
             onClick={onBack}
@@ -285,19 +322,14 @@ export default function Profile({ onBack, onProfileUpdated }) {
           >
             ← Back to feed
           </button>
-        )} */}
+        )}
 
         <ProfileHeader
           user={profile}
-          onProfileUpdated={syncProfile}
+          onUploadAvatar={handleAvatarUpload}
+          onSaveName={handleNameSaved}
+          onSaveBio={handleBioSaved}
         />
-
-        {/* <FollowSection /> */}
-
-        {/* <BioInput
-          bio={profile.bio || ""}
-          onSaved={handleBioSaved}
-        /> */}
 
         <PostSearch
           value={search}
@@ -309,7 +341,9 @@ export default function Profile({ onBack, onProfileUpdated }) {
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Posts</h2>
+            <h2 className="text-lg font-semibold">
+              Posts
+            </h2>
 
             <span className="text-sm text-gray-400">
               {filteredPosts.length}{" "}
@@ -329,6 +363,7 @@ export default function Profile({ onBack, onProfileUpdated }) {
     </main>
   );
 }
+
 
 
 
