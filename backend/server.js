@@ -7,6 +7,7 @@ import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 
+
 import { connectDB } from "./config/db.js";
 
 // Route imports
@@ -134,6 +135,7 @@ app.use("/api/votes", voteRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/notifications", notificationRoutes);
+
 
 // Home route / API health check
 app.get("/", (req, res) => {

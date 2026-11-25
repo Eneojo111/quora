@@ -7,6 +7,13 @@ import Post from "../models/post.js";
 import Question from "../models/question.js";
 import Report from "../models/report.js";
 
+import {
+  getAllUsers,
+  updateUserRole,
+  updateUserStatus,
+  permanentlyDeleteUser
+} from "../controllers/admin.controller.js";
+
 import { protect } from "../middleware/auth.middleware.js";
 import { adminOnly } from "../middleware/adminMiddleware.js";
 
@@ -17,8 +24,12 @@ import {
 
 const router = express.Router();
 
-// Submit a report.
-// Any authenticated user can report content.
+
+// ==================================================
+// SUBMIT REPORT
+// Any authenticated user can submit a report.
+// ==================================================
+
 router.post("/reports", protect, async (req, res) => {
   try {
     const { targetType, targetId, reason, details } = req.body;
@@ -57,6 +68,7 @@ router.post("/reports", protect, async (req, res) => {
       message: "Report submitted successfully.",
       data: report
     });
+
   } catch (error) {
     console.error("Submit report error:", error);
 
@@ -66,10 +78,19 @@ router.post("/reports", protect, async (req, res) => {
   }
 });
 
-// All routes below require administrator privileges.
+
+// ==================================================
+// ADMIN PROTECTION
+// All routes below require an authenticated admin.
+// ==================================================
+
 router.use(protect, adminOnly);
 
-// Dashboard statistics.
+
+// ==================================================
+// DASHBOARD OVERVIEW
+// ==================================================
+
 router.get("/overview", async (req, res) => {
   try {
     const [
@@ -99,6 +120,7 @@ router.get("/overview", async (req, res) => {
         pendingReports
       }
     });
+
   } catch (error) {
     console.error("Admin overview error:", error);
 
@@ -108,114 +130,37 @@ router.get("/overview", async (req, res) => {
   }
 });
 
-// List and search users.
-router.get("/users", async (req, res) => {
-  try {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
-    const search = String(req.query.search || "").trim();
 
-    const filter = search
-      ? {
-          $or: [
-            { name: { $regex: search, $options: "i" } },
-            { username: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } }
-          ]
-        }
-      : {};
+// ==================================================
+// MANAGE USERS
+// ==================================================
 
-    const [users, total] = await Promise.all([
-      User.find(filter)
-        .select("-password")
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-
-      User.countDocuments(filter)
-    ]);
-
-    return sendSuccess(res, {
-      message: "Users retrieved successfully.",
-      data: users,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
-  } catch (error) {
-    console.error("Get admin users error:", error);
-
-    return sendError(res, {
-      message: "Unable to retrieve users."
-    });
-  }
-});
+// Get all users and search users.
+router.get("/users", getAllUsers);
 
 // Change a user's role.
-router.patch("/users/:id/role", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { role } = req.body;
+router.patch("/users/:userId/role", updateUserRole);
 
-    if (!mongoose.isValidObjectId(id)) {
-      return sendError(res, {
-        statusCode: 400,
-        message: "Invalid user ID."
-      });
-    }
+// Suspend or reactivate a user's account.
+router.patch("/users/:userId/status", updateUserStatus);
 
-    if (!["user", "admin"].includes(role)) {
-      return sendError(res, {
-        statusCode: 400,
-        message: "Role must be either user or admin."
-      });
-    }
+// Permanently delete a user's account.
+router.delete("/users/:userId", permanentlyDeleteUser);
 
-    if (String(req.user._id) === id) {
-      return sendError(res, {
-        statusCode: 400,
-        message: "You cannot change your own administrator role."
-      });
-    }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { role },
-      {
-        returnDocument: "after",
-        runValidators: true
-      }
-    ).select("-password");
+// ==================================================
+// MANAGE POSTS
+// ==================================================
 
-    if (!updatedUser) {
-      return sendError(res, {
-        statusCode: 404,
-        message: "User not found."
-      });
-    }
-
-    return sendSuccess(res, {
-      message: "User role updated successfully.",
-      data: updatedUser
-    });
-  } catch (error) {
-    console.error("Update user role error:", error);
-
-    return sendError(res, {
-      message: "Unable to update user role."
-    });
-  }
-});
-
-// List posts.
+// Get all posts.
 router.get("/posts", async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+    const limit = Math.min(
+      50,
+      Math.max(1, Number(req.query.limit) || 10)
+    );
 
     const [posts, total] = await Promise.all([
       Post.find()
@@ -238,6 +183,7 @@ router.get("/posts", async (req, res) => {
         totalPages: Math.ceil(total / limit)
       }
     });
+
   } catch (error) {
     console.error("Get admin posts error:", error);
 
@@ -246,6 +192,7 @@ router.get("/posts", async (req, res) => {
     });
   }
 });
+
 
 // Delete a post.
 router.delete("/posts/:id", async (req, res) => {
@@ -268,8 +215,11 @@ router.delete("/posts/:id", async (req, res) => {
 
     return sendSuccess(res, {
       message: "Post deleted successfully.",
-      data: { id: post._id }
+      data: {
+        id: post._id
+      }
     });
+
   } catch (error) {
     console.error("Delete admin post error:", error);
 
@@ -279,11 +229,20 @@ router.delete("/posts/:id", async (req, res) => {
   }
 });
 
-// List reports.
+
+// ==================================================
+// MANAGE REPORTS
+// ==================================================
+
+// Get all reports.
 router.get("/reports", async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+    const limit = Math.min(
+      50,
+      Math.max(1, Number(req.query.limit) || 10)
+    );
 
     const filter = {};
 
@@ -317,6 +276,7 @@ router.get("/reports", async (req, res) => {
         totalPages: Math.ceil(total / limit)
       }
     });
+
   } catch (error) {
     console.error("Get reports error:", error);
 
@@ -325,6 +285,7 @@ router.get("/reports", async (req, res) => {
     });
   }
 });
+
 
 // Update report status.
 router.patch("/reports/:id", async (req, res) => {
@@ -377,6 +338,7 @@ router.patch("/reports/:id", async (req, res) => {
       message: "Report updated successfully.",
       data: report
     });
+
   } catch (error) {
     console.error("Update report error:", error);
 
@@ -386,4 +348,12 @@ router.patch("/reports/:id", async (req, res) => {
   }
 });
 
+
+
+
 export default router;
+
+
+
+
+

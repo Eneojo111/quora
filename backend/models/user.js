@@ -60,6 +60,23 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    // ACCOUNT SUSPENSION FIELDS
+    isSuspended: {
+      type: Boolean,
+      default: false
+    },
+
+    suspensionReason: {
+      type: String,
+      default: ""
+    },
+
+    suspendedAt: {
+      type: Date,
+      default: null
+    },
+
+    // USER ROLE
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -75,3 +92,4 @@ const User =
   mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
+

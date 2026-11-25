@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import AdminOverview from "./pages/admin/adminOverview";
+import ManageUsers from "./pages/admin/manageUsers.jsx";
+import ManagePosts from "./pages/admin/managePosts.jsx";
+import ManageReports from "./pages/admin/manageReports.jsx";
+import Settings from "./pages/admin/adminSettings.jsx";
 
 import {
   FaHome,
@@ -483,8 +487,8 @@ export default function App() {
                         type="button"
                         key={notification._id}
                         className={`flex w-full items-start gap-3 border-b border-gray-700/70 px-4 py-4 text-left transition hover:bg-white/5 ${notification.isRead
-                            ? "bg-transparent"
-                            : "bg-red-950/20"
+                          ? "bg-transparent"
+                          : "bg-red-950/20"
                           }`}
                         onClick={() =>
                           handleMarkAsRead(notification._id)
@@ -668,14 +672,24 @@ export default function App() {
           />
 
           {/* Admin-only routes */}
+          {/* Admin-only routes */}
+
           <Route element={<AdminProtectedRoute user={user} />}>
-            <Route
-              path="/admin"
-              element={<AdminDashboard user={user} />}
-            >
+            <Route path="/admin" element={<AdminDashboard user={user} />}>
+
               <Route index element={<AdminOverview />} />
+
+              <Route path="users" element={<ManageUsers />} />
+
+              <Route path="posts" element={<ManagePosts />} />
+
+              <Route path="reports" element={<ManageReports />} />
+
+              <Route path="settings" element={<Settings user={user} />} />
+
             </Route>
           </Route>
+
 
           {/* Unknown routes */}
           <Route
